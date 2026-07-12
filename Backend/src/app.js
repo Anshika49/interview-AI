@@ -6,7 +6,10 @@ const cors = require("cors")
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin:"https://interview-ai-roan-iota.vercel.app",
+    origin: [
+      "http://localhost:5173",
+      "https://interview-ai-roan-iota.vercel.app",
+    ],
     credentials:true
 }))
 
