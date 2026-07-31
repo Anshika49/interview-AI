@@ -8,6 +8,7 @@ app.use(cors({
       "http://localhost:5173",
       "https://interview-ai-roan-iota.vercel.app",
       "https://interview-r97bojnti-anshikas-projects-cfb4b1b1.vercel.app",
+      "https://interview-qrt26xj25-anshikas-projects-cfb4b1b1.vercel.app",
     ],
     credentials:true
 }))
