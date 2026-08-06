@@ -1,9 +1,9 @@
 import axios from "axios"
-
+import { apiBaseUrl } from "../../../config/api"
 
 const api = axios.create({
-    baseURL:"https://interview-ai-qyav.onrender.com",
-    withCredentials:true
+    baseURL: apiBaseUrl,
+    withCredentials: true
 })
 
 export async function register({username,email,password}){

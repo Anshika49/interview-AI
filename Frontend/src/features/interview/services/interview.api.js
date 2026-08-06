@@ -1,14 +1,13 @@
 import axios from "axios";
+import { apiBaseUrl } from "../../../config/api";
 
 const api = axios.create({
-    baseURL: "https://interview-ai-qyav.onrender.com",
+    baseURL: apiBaseUrl,
     withCredentials: true,
 })
 
 
-/**
- * @description Service to generate interview report based on user self description, resume and job description.
- */
+
 export const generateInterviewReport = async ({ jobDescription, selfDescription, resumeFile }) => {
 
     const formData = new FormData()

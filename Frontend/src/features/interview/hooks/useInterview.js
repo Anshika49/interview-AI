@@ -61,15 +61,18 @@ export const useInterview = () => {
 
     const getResumePdf = async (interviewReportId) => {
         setLoading(true)
-        let response = null
         try {
-            response = await generateResumePdf({ interviewReportId })
-            const url = window.URL.createObjectURL(new Blob([ response ], { type: "application/pdf" }))
+            const response = await generateResumePdf({ interviewReportId })
+            const blob = response instanceof Blob ? response : new Blob([ response ], { type: "application/pdf" })
+            const url = window.URL.createObjectURL(blob)
             const link = document.createElement("a")
             link.href = url
-            link.setAttribute("download", `resume_${interviewReportId}.pdf`)
+            link.download = `resume_${interviewReportId}.pdf`
+            link.style.display = "none"
             document.body.appendChild(link)
             link.click()
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
         }
         catch (error) {
             console.log(error)

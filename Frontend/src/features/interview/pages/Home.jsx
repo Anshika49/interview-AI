@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import "../style/home.scss"
 import { useInterview } from '../hooks/useInterview.js'
 import { useNavigate } from 'react-router'
@@ -8,12 +8,50 @@ const Home = () => {
     const { loading, generateReport,reports } = useInterview()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
+    const [ selectedResume, setSelectedResume ] = useState(null)
+    const [ previewUrl, setPreviewUrl ] = useState("")
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
 
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl)
+            }
+        }
+    }, [ previewUrl ])
+
+    const handleResumeSelection = (event) => {
+        const file = event.target.files?.[ 0 ]
+
+        if (!file) {
+            return
+        }
+
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl)
+        }
+
+        setSelectedResume(file)
+        setPreviewUrl(file.type === "application/pdf" ? URL.createObjectURL(file) : "")
+    }
+
+    const handleRemoveResume = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl)
+        }
+
+        setSelectedResume(null)
+        setPreviewUrl("")
+
+        if (resumeInputRef.current) {
+            resumeInputRef.current.value = ""
+        }
+    }
+
     const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[ 0 ]
+        const resumeFile = selectedResume || resumeInputRef.current?.files?.[ 0 ]
         const data = await generateReport({ jobDescription, selfDescription, resumeFile })
         navigate(`/interview/${data._id}`)
     }
@@ -75,14 +113,40 @@ const Home = () => {
                                 Upload Resume
                                 <span className='badge badge--best'>Best Results</span>
                             </label>
-                            <label className='dropzone' htmlFor='resume'>
-                                <span className='dropzone__icon'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
-                                </span>
-                                <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
-                                <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
-                            </label>
+
+                            {selectedResume ? (
+                                <div className='resume-preview-card'>
+    <div className="resume-preview-card__file">
+        <div className="resume-preview-card__icon">
+            📄
+        </div>
+
+        <div className="resume-preview-card__details">
+            <p>{selectedResume.name}</p>
+            <span>PDF Document</span>
+        </div>
+    </div>
+
+                                    <div className='resume-preview-card__actions'>
+                                        <button type='button' className='resume-preview-card__button resume-preview-card__button--secondary' onClick={() => resumeInputRef.current?.click()}>
+                                            Choose another file
+                                        </button>
+                                        <button type='button' className='resume-preview-card__button resume-preview-card__button--danger' onClick={handleRemoveResume}>
+                                            Delete resume
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <label className='dropzone' htmlFor='resume'>
+                                    <span className='dropzone__icon'>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
+                                    </span>
+                                    <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
+                                    <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
+                                </label>
+                            )}
+
+                            <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' onChange={handleResumeSelection} />
                         </div>
 
                         {/* OR Divider */}
