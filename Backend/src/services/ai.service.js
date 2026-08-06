@@ -2,7 +2,7 @@ const {GoogleGenAI} = require("@google/genai")
 const {z} = require("zod")
 const {zodToJsonSchema} = require("zod-to-json-schema")
 const puppeteer = require("puppeteer")
-import fs from "fs";
+const fs = require("fs")
 
 
 const ai = new GoogleGenAI({
