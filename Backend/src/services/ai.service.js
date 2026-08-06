@@ -2,7 +2,6 @@ const {GoogleGenAI} = require("@google/genai")
 const {z} = require("zod")
 const {zodToJsonSchema} = require("zod-to-json-schema")
 const puppeteer = require("puppeteer")
-const fs = require("fs")
 
 
 const ai = new GoogleGenAI({
@@ -56,11 +55,6 @@ async function generateInterViewReport({resume,selfDescription,jobDescription}){
 }
 
 async function generatePdfFromHtml(htmlContent) {
-    console.log("Chrome exists:",
-  fs.existsSync("/opt/render/.cache/puppeteer/chrome/linux-150.0.7871.24/chrome-linux64/chrome")
-);
-
-console.log("Executable path:", puppeteer.executablePath());
     const browser = await puppeteer.launch()
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" })
