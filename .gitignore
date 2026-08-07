@@ -1,0 +1,10 @@
+# Environment files
+.env
+Backend/.env
+
+# Node modules
+node_modules/
+
+# Build files
+dist/
+build/
