@@ -1,0 +1,200 @@
+$bg-page: #0d1117;
+$bg-card: #161b22;
+$bg-panel: #1c2230;
+$border-color: #2a3348;
+$text-primary: #e6edf3;
+$text-muted: #7d8590;
+$accent: #ff2d78;
+$font-stack: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+$severity-high: #ff4d4d;
+$severity-low: #3fb950;
+
+.permission-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(#000000, 0.65);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.permission-modal {
+    width: 100%;
+    max-width: 460px;
+    background-color: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 1rem;
+    padding: 1.75rem;
+    color: $text-primary;
+    font-family: $font-stack;
+    box-shadow: 0 20px 60px rgba(#000000, 0.5);
+
+    &__header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        p {
+            font-size: 0.85rem;
+            color: $text-muted;
+            line-height: 1.55;
+            margin: 0;
+        }
+    }
+
+    &__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $accent;
+        background-color: rgba($accent, 0.12);
+        border: 1px solid rgba($accent, 0.25);
+        margin-bottom: 0.25rem;
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    &__error {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        background-color: rgba($severity-high, 0.1);
+        border: 1px solid rgba($severity-high, 0.25);
+        color: lighten($severity-high, 8%);
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.6rem;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        margin-bottom: 1.25rem;
+
+        svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+    }
+
+    &__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+
+        .button {
+            font-family: $font-stack;
+            font-size: 0.875rem;
+            font-weight: 600;
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+
+        .ghost-button {
+            background: none;
+            color: $text-muted;
+            border: 1px solid $border-color;
+
+            &:hover {
+                color: $text-primary;
+                border-color: lighten($border-color, 10%);
+            }
+        }
+    }
+}
+
+.permission-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background-color: $bg-panel;
+    border: 1px solid $border-color;
+    border-radius: 0.7rem;
+    padding: 0.85rem 1rem;
+
+    &__label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    &__icon {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba($accent, 0.08);
+        color: $accent;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: $text-primary;
+    }
+
+    &__subtitle {
+        margin: 0;
+        font-size: 0.75rem;
+        color: $text-muted;
+    }
+}
+
+.status-pill {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.25rem 0.6rem;
+    border-radius: 2rem;
+    border: 1px solid;
+
+    &--granted {
+        color: $severity-low;
+        background-color: rgba($severity-low, 0.1);
+        border-color: rgba($severity-low, 0.25);
+    }
+
+    &--denied {
+        color: $severity-high;
+        background-color: rgba($severity-high, 0.1);
+        border-color: rgba($severity-high, 0.25);
+    }
+
+    &--checking {
+        color: #f5a623;
+        background-color: rgba(#f5a623, 0.1);
+        border-color: rgba(#f5a623, 0.25);
+    }
+
+    &--idle {
+        color: $text-muted;
+        background-color: rgba($text-muted, 0.08);
+        border-color: rgba($text-muted, 0.2);
+    }
+}

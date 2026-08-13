@@ -110,6 +110,30 @@ $severity-low: #3fb950;
     }
 }
 
+.nav-footer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+
+    .button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+
+    .button.nav-footer-actions__video-btn {
+        background-color: transparent;
+        border: 1px solid $accent;
+        color: $accent;
+
+        &:hover {
+            background-color: rgba($accent, 0.1);
+        }
+    }
+}
+
 // ── Center Content ────────────────────────────────────────────────────────────
 .interview-content {
     flex: 1;
@@ -259,7 +283,86 @@ $severity-low: #3fb950;
             background-color: rgba(#3fb950, 0.1);
             border: 1px solid rgba(#3fb950, 0.2);
         }
+
+        &--feedback {
+            color: #58a6ff;
+            background-color: rgba(#58a6ff, 0.1);
+            border: 1px solid rgba(#58a6ff, 0.2);
+        }
+
+        &--suggestions {
+            color: $severity-medium;
+            background-color: rgba($severity-medium, 0.1);
+            border: 1px solid rgba($severity-medium, 0.2);
+        }
     }
+}
+
+// ── AI Video Interview: score badge, suggestions, empty state ────────────────
+.vq-score-badge {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.3rem;
+    margin-top: 1px;
+    border: 1px solid;
+
+    &.score--high {
+        color: $severity-low;
+        background-color: rgba($severity-low, 0.1);
+        border-color: rgba($severity-low, 0.25);
+    }
+
+    &.score--mid {
+        color: $severity-medium;
+        background-color: rgba($severity-medium, 0.1);
+        border-color: rgba($severity-medium, 0.25);
+    }
+
+    &.score--low {
+        color: $severity-high;
+        background-color: rgba($severity-high, 0.1);
+        border-color: rgba($severity-high, 0.25);
+    }
+}
+
+.vq-suggestions {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    li {
+        font-size: 0.835rem;
+        color: lighten($text-muted, 15%);
+        line-height: 1.6;
+    }
+}
+
+.vi-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    background-color: $bg-panel;
+    border: 1px solid $border-color;
+    border-radius: 0.6rem;
+    padding: 1.5rem;
+
+    p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: $text-muted;
+    }
+}
+
+.hiring-recommendation {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: lighten($text-muted, 15%);
 }
 
 // ── Road Map ──────────────────────────────────────────────────────────────────

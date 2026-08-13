@@ -1,0 +1,345 @@
+$bg-page: #0d1117;
+$bg-card: #161b22;
+$bg-panel: #1c2230;
+$border-color: #2a3348;
+$text-primary: #e6edf3;
+$text-muted: #7d8590;
+$accent: #ff2d78;
+$font-stack: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$severity-high: #ff4d4d;
+$severity-low: #3fb950;
+
+*::-webkit-scrollbar {
+    display: none;
+}
+
+.video-interview-page {
+    width: 100%;
+    min-height: 100vh;
+    background-color: $bg-page;
+    color: $text-primary;
+    font-family: $font-stack;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    box-sizing: border-box;
+
+    &--gate {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    &__gate-error {
+        color: $severity-high;
+        font-size: 0.85rem;
+    }
+
+    &--complete {
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.video-interview-shell {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+.vi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    &__title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0;
+        }
+    }
+
+    &__difficulty {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: $accent;
+        background-color: rgba($accent, 0.1);
+        border: 1px solid rgba($accent, 0.25);
+        padding: 0.2rem 0.6rem;
+        border-radius: 2rem;
+    }
+
+    &__progress {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 220px;
+
+        span {
+            font-size: 0.75rem;
+            color: $text-muted;
+            text-align: right;
+        }
+    }
+}
+
+.vi-progress-bar {
+    width: 220px;
+    height: 6px;
+    border-radius: 4px;
+    background-color: $bg-panel;
+    border: 1px solid $border-color;
+    overflow: hidden;
+
+    &__fill {
+        height: 100%;
+        background: linear-gradient(90deg, $accent, lighten($accent, 12%));
+        transition: width 0.4s ease;
+    }
+}
+
+.vi-error {
+    background-color: rgba($severity-high, 0.1);
+    border: 1px solid rgba($severity-high, 0.25);
+    color: lighten($severity-high, 8%);
+    padding: 0.65rem 1rem;
+    border-radius: 0.6rem;
+    font-size: 0.8rem;
+}
+
+// ── Stage (webcam + AI avatar) ─────────────────────────────────────────────
+.vi-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+
+    @media (max-width: 720px) {
+        grid-template-columns: 1fr;
+    }
+
+    &__panel {
+        position: relative;
+        aspect-ratio: 16 / 10;
+        background-color: $bg-card;
+        border: 1px solid $border-color;
+        border-radius: 1rem;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__label {
+        position: absolute;
+        left: 0.9rem;
+        bottom: 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: $text-primary;
+        background-color: rgba(#000000, 0.55);
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.4rem;
+    }
+}
+
+.vi-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); // mirror, feels natural like a webcam
+}
+
+.vi-recording-dot {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.9rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: $severity-high;
+    background-color: rgba(#000000, 0.55);
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+    animation: vi-pulse 1.6s infinite ease-in-out;
+}
+
+@keyframes vi-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.ai-avatar {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, rgba($accent, 0.18), rgba(#a78bfa, 0.12));
+    border: 1px solid rgba($accent, 0.3);
+    color: $accent;
+
+    &__glow {
+        position: absolute;
+        inset: -18px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba($accent, 0.18), transparent 70%);
+        animation: vi-glow 3s infinite ease-in-out;
+    }
+}
+
+@keyframes vi-glow {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+
+// ── Bottom panel (question + transcript) ───────────────────────────────────
+.vi-bottom {
+    background-color: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: vi-fade-in 0.35s ease;
+}
+
+@keyframes vi-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.vi-question {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    &__tag {
+        flex-shrink: 0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: $accent;
+        background-color: rgba($accent, 0.1);
+        border: 1px solid rgba($accent, 0.2);
+        border-radius: 0.3rem;
+        padding: 0.15rem 0.4rem;
+        margin-top: 2px;
+    }
+
+    p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.5;
+        color: $text-primary;
+    }
+}
+
+.vi-transcript {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    &__label {
+        margin: 0;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: $text-muted;
+    }
+
+    &__box {
+        min-height: 80px;
+        max-height: 160px;
+        overflow-y: auto;
+        background-color: $bg-panel;
+        border: 1px solid $border-color;
+        border-radius: 0.6rem;
+        padding: 0.75rem 0.9rem;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: lighten($text-muted, 20%);
+    }
+
+    &__placeholder {
+        color: $text-muted;
+        font-style: italic;
+    }
+
+    &__fallback-input {
+        width: 100%;
+        min-height: 80px;
+        background: none;
+        border: none;
+        outline: none;
+        resize: vertical;
+        color: $text-primary;
+        font-family: $font-stack;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+}
+
+.vi-controls {
+    display: flex;
+    justify-content: flex-end;
+
+    .button {
+        font-family: $font-stack;
+        font-size: 0.875rem;
+        font-weight: 600;
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
+
+    &__submit {
+        background-color: $severity-low;
+    }
+}
+
+// ── Completion screen ───────────────────────────────────────────────────────
+.completion-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    background-color: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 1rem;
+    padding: 3rem 2.5rem;
+    animation: vi-fade-in 0.4s ease;
+
+    &__icon {
+        color: $severity-low;
+        margin-bottom: 0.5rem;
+    }
+
+    h1 {
+        font-size: 1.3rem;
+        margin: 0;
+    }
+
+    p {
+        font-size: 0.875rem;
+        color: $text-muted;
+        margin: 0;
+    }
+}
