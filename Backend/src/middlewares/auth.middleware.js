@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken")
-const tokenBlacklistModel = require("../models/blacklist.model")
+const redisClient = require("../config/redis")
 
 async function authUser(req,res,next){
     const token = req.cookies.token
@@ -8,14 +8,17 @@ async function authUser(req,res,next){
             message:"token not provided"
         })
     }
-    const isTokenBlacklisted = await tokenBlacklistModel.findOne({
-        token
-    })
-    if(isTokenBlacklisted){
-        return res.status(401).json({
-            message:"token is invalid"
-        })
+    try{
+        const isTokenBlacklisted = await redisClient.exists(`blacklist:${token}`)
+        if(isTokenBlacklisted){
+            return res.status(401).json({
+                message:"token is invalid"
+            })
+        }
+    }catch(err){
+        console.error("redis blacklist check failed, failing open:", err.message)
     }
+
     try{
     const decoded = jwt.verify(token,process.env.JWT_SECRET)
     req.user = decoded

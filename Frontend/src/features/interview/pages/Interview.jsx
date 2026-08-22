@@ -232,15 +232,29 @@ const Interview = () => {
                             <div className='content-header'>
                                 <h2>AI Video Interview</h2>
                                 <span className='content-header__count'>
-                                    {videoInterview ? `${videoInterview.questions.length} questions` : 'Not taken yet'}
+                                    {videoInterview
+                                        ? `${videoInterview.questions.length} question${videoInterview.questions.length === 1 ? '' : 's'}`
+                                        : 'Not taken yet'}
                                 </span>
+                                {videoInterview?.status === 'incomplete' && (
+                                    <span className='incomplete-badge'>Incomplete Interview</span>
+                                )}
                             </div>
 
-                            {videoInterview ? (
+                            {videoInterview && videoInterview.questions.length > 0 ? (
                                 <div className='q-list'>
                                     {videoInterview.questions.map((q, i) => (
                                         <VideoQuestionCard key={i} item={q} index={i} />
                                     ))}
+                                </div>
+                            ) : videoInterview && videoInterview.status === 'incomplete' ? (
+                                <div className='vi-empty-state'>
+                                    <p>This interview was ended before any questions were answered.</p>
+                                    <button
+                                        onClick={() => { navigate(`/interview/${interviewId}/video-interview`) }}
+                                        className='button primary-button'>
+                                        Try Again
+                                    </button>
                                 </div>
                             ) : (
                                 <div className='vi-empty-state'>
@@ -261,50 +275,74 @@ const Interview = () => {
                 {/* ── Right Sidebar ── */}
                 <aside className='interview-sidebar'>
 
-                    {activeNav === 'video-interview' && videoInterview ? (
+                    {activeNav === 'video-interview' && videoInterview && videoInterview.questions.length > 0 ? (
                         <>
                             {/* Overall Interview Score */}
-                            <div className='match-score'>
-                                <p className='match-score__label'>Overall Interview Score</p>
-                                <div className={`match-score__ring ${scoreBand10(videoInterview.overallScore)}`}>
-                                    <span className='match-score__value'>{videoInterview.overallScore}</span>
-                                    <span className='match-score__pct'>/10</span>
+                            {videoInterview.overallScore != null ? (
+                                <>
+                                    <div className='match-score'>
+                                        <p className='match-score__label'>
+                                            Overall Interview Score
+                                            {videoInterview.status === 'incomplete' && <span className='incomplete-badge incomplete-badge--inline'>Partial</span>}
+                                        </p>
+                                        <div className={`match-score__ring ${scoreBand10(videoInterview.overallScore)}`}>
+                                            <span className='match-score__value'>{videoInterview.overallScore}</span>
+                                            <span className='match-score__pct'>/10</span>
+                                        </div>
+                                        <p className='match-score__sub'>
+                                            {videoInterview.overallRating}
+                                            {videoInterview.status === 'incomplete' && ` — based on ${videoInterview.questions.length} of 5 questions answered`}
+                                        </p>
+                                    </div>
+
+                                    <div className='sidebar-divider' />
+
+                                    {/* Strengths */}
+                                    <div className='skill-gaps'>
+                                        <p className='skill-gaps__label'>Strengths</p>
+                                        <div className='skill-gaps__list'>
+                                            {videoInterview.strengths?.map((s, i) => (
+                                                <span key={i} className='skill-tag skill-tag--low'>{s}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className='sidebar-divider' />
+
+                                    {/* Weaknesses */}
+                                    <div className='skill-gaps'>
+                                        <p className='skill-gaps__label'>Weaknesses</p>
+                                        <div className='skill-gaps__list'>
+                                            {videoInterview.weaknesses?.map((w, i) => (
+                                                <span key={i} className='skill-tag skill-tag--high'>{w}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className='sidebar-divider' />
+
+                                    {/* Hiring Recommendation */}
+                                    <div className='skill-gaps'>
+                                        <p className='skill-gaps__label'>Hiring Recommendation</p>
+                                        <p className='hiring-recommendation'>{videoInterview.hiringRecommendation}</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className='vi-empty-state'>
+                                    {videoInterview.status === 'incomplete' && (
+                                        <span className='incomplete-badge'>Incomplete Interview</span>
+                                    )}
+                                    <p>
+                                        Your {videoInterview.questions.length} answered question{videoInterview.questions.length === 1 ? '' : 's'} {videoInterview.questions.length === 1 ? 'was' : 'were'} saved,
+                                        but we couldn't generate an overall summary for this interview. You can still review each question's individual feedback and score on the left.
+                                    </p>
                                 </div>
-                                <p className='match-score__sub'>{videoInterview.overallRating}</p>
-                            </div>
-
-                            <div className='sidebar-divider' />
-
-                            {/* Strengths */}
-                            <div className='skill-gaps'>
-                                <p className='skill-gaps__label'>Strengths</p>
-                                <div className='skill-gaps__list'>
-                                    {videoInterview.strengths?.map((s, i) => (
-                                        <span key={i} className='skill-tag skill-tag--low'>{s}</span>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className='sidebar-divider' />
-
-                            {/* Weaknesses */}
-                            <div className='skill-gaps'>
-                                <p className='skill-gaps__label'>Weaknesses</p>
-                                <div className='skill-gaps__list'>
-                                    {videoInterview.weaknesses?.map((w, i) => (
-                                        <span key={i} className='skill-tag skill-tag--high'>{w}</span>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className='sidebar-divider' />
-
-                            {/* Hiring Recommendation */}
-                            <div className='skill-gaps'>
-                                <p className='skill-gaps__label'>Hiring Recommendation</p>
-                                <p className='hiring-recommendation'>{videoInterview.hiringRecommendation}</p>
-                            </div>
+                            )}
                         </>
+                    ) : activeNav === 'video-interview' && videoInterview ? (
+                        <div className='vi-empty-state'>
+                            <p>No questions were answered in this interview, so no score is available.</p>
+                        </div>
                     ) : (
                         <>
                             {/* Match Score */}

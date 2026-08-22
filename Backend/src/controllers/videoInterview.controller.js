@@ -15,7 +15,7 @@ async function startVideoInterviewController(req, res) {
             message: "Interview report not found."
         })
     }
-try{
+
     const firstQuestion = await generateVideoInterviewQuestion({
         jobDescription: interviewReport.jobDescription,
         resume: interviewReport.resume || interviewReport.selfDescription,
@@ -44,12 +44,6 @@ try{
         question: firstQuestion.question,
         difficulty: firstQuestion.difficulty
     })
-} catch(error){
-    console.error("gemini error while starting video interview",error)
-    return res.status(503).json({
-        message:"ai service temporarily unavailable."
-    })
-}
 }
 
 async function submitAnswerController(req, res) {
@@ -65,9 +59,9 @@ async function submitAnswerController(req, res) {
         })
     }
 
-    if (videoInterview.status === "completed") {
+    if (videoInterview.status !== "in-progress") {
         return res.status(400).json({
-            message: "This video interview has already been completed."
+            message: "This video interview is no longer in progress."
         })
     }
 
@@ -84,23 +78,39 @@ async function submitAnswerController(req, res) {
     currentQuestion.transcript = transcript || ""
     currentQuestion.evaluation = evaluation
 
+    // Persist this answer immediately, independent of whatever happens next
+    // (generating the next question, or the final summary). An answer the
+    // candidate already gave should never be lost to a transient AI failure.
+    await videoInterview.save()
+
     const isLastQuestion = videoInterview.questions.length >= TOTAL_QUESTIONS
 
     if (isLastQuestion) {
 
-        const summary = await generateVideoInterviewSummary({
-            jobDescription: videoInterview.jobDescription,
-            questions: videoInterview.questions
-        })
-
+        // Mark the interview completed — this must not depend on the summary
+        // call below succeeding.
         videoInterview.status = "completed"
-        videoInterview.overallScore = summary.overallScore
-        videoInterview.overallRating = summary.overallRating
-        videoInterview.strengths = summary.strengths
-        videoInterview.weaknesses = summary.weaknesses
-        videoInterview.hiringRecommendation = summary.hiringRecommendation
-
         await videoInterview.save()
+
+        try {
+            const summary = await generateVideoInterviewSummary({
+                jobDescription: videoInterview.jobDescription,
+                questions: videoInterview.questions
+            })
+
+            videoInterview.overallScore = summary.overallScore
+            videoInterview.overallRating = summary.overallRating
+            videoInterview.strengths = summary.strengths
+            videoInterview.weaknesses = summary.weaknesses
+            videoInterview.hiringRecommendation = summary.hiringRecommendation
+
+            await videoInterview.save()
+        } catch (err) {
+            // The interview is already saved as "completed" with all 5
+            // answered questions above — a failed summary just means
+            // overallScore/rating/etc stay unset. The frontend handles that.
+            console.error("Failed to generate summary for a completed video interview:", err)
+        }
 
         return res.status(200).json({
             message: "Interview completed successfully.",
@@ -136,6 +146,7 @@ async function submitAnswerController(req, res) {
         difficulty: nextQuestion.difficulty
     })
 }
+
 async function endInterviewController(req, res) {
 
     const { videoInterviewId } = req.params
@@ -163,20 +174,33 @@ async function endInterviewController(req, res) {
     videoInterview.questions = answeredQuestions
     videoInterview.status = "incomplete"
 
-    if (answeredQuestions.length > 0) {
-        const summary = await generateVideoInterviewSummary({
-            jobDescription: videoInterview.jobDescription,
-            questions: answeredQuestions
-        })
-
-        videoInterview.overallScore = summary.overallScore
-        videoInterview.overallRating = summary.overallRating
-        videoInterview.strengths = summary.strengths
-        videoInterview.weaknesses = summary.weaknesses
-        videoInterview.hiringRecommendation = summary.hiringRecommendation
-    }
-
+    // Persist the "ended" state first, independent of the summary call below.
+    // Ending the interview must never be blocked or lost because of a
+    // transient AI provider failure — the candidate's answered questions are
+    // saved regardless of whether we manage to generate an overall summary.
     await videoInterview.save()
+
+    if (answeredQuestions.length > 0) {
+        try {
+            const summary = await generateVideoInterviewSummary({
+                jobDescription: videoInterview.jobDescription,
+                questions: answeredQuestions
+            })
+
+            videoInterview.overallScore = summary.overallScore
+            videoInterview.overallRating = summary.overallRating
+            videoInterview.strengths = summary.strengths
+            videoInterview.weaknesses = summary.weaknesses
+            videoInterview.hiringRecommendation = summary.hiringRecommendation
+
+            await videoInterview.save()
+        } catch (err) {
+            // The interview is already saved as "incomplete" with its answered
+            // questions above — a failed summary just means overallScore/
+            // rating/etc stay unset. The frontend handles that gracefully.
+            console.error("Failed to generate summary for an early-ended video interview:", err)
+        }
+    }
 
     res.status(200).json({
         message: "Interview ended early.",
@@ -213,7 +237,7 @@ async function getVideoInterviewByReportController(req, res) {
     const videoInterview = await videoInterviewModel.findOne({
         interviewReport: interviewReportId,
         user: req.user.id,
-        status: "completed"
+        status: { $in: [ "completed", "incomplete" ] }
     }).sort({ createdAt: -1 })
 
     res.status(200).json({

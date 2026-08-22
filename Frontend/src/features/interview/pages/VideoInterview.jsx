@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import "../style/videoInterview.scss"
 import PermissionModal from '../components/PermissionModal'
 import { useVideoInterview } from '../hooks/useVideoInterview'
+import { apiBaseUrl } from '../../../config/api'
 
 const TOTAL_QUESTIONS = 5
 
@@ -47,6 +48,35 @@ const VideoInterview = () => {
     const cameraStreamRef = useRef(null)
     const recognitionRef = useRef(null)
     const isListeningRef = useRef(false)
+
+    // Mirrors the latest phase/videoInterviewId/questionNumber so unmount and
+    // beforeunload handlers (which close over stale state otherwise) can read
+    // current values without needing to be re-created on every render.
+    const latestRef = useRef({ phase, videoInterviewId, questionNumber })
+    useEffect(() => {
+        latestRef.current = { phase, videoInterviewId, questionNumber }
+    }, [ phase, videoInterviewId, questionNumber ])
+
+    // If the candidate leaves mid-interview (browser back, closing the tab,
+    // navigating elsewhere in the app) without explicitly clicking "End
+    // Interview", the record would otherwise stay stuck as "in-progress"
+    // forever — invisible on the report page and effectively losing whatever
+    // they'd already answered. Auto-finalize it as incomplete instead.
+    useEffect(() => {
+        const finalizeIfAbandoned = () => {
+            const { phase: currentPhase, videoInterviewId: currentId, questionNumber: currentQNum } = latestRef.current
+            const midInterview = (currentPhase === 'interview' || currentPhase === 'evaluating') && currentId && currentQNum > 1
+            if (midInterview) {
+                navigator.sendBeacon(`${apiBaseUrl}/api/interview/video/${currentId}/end`)
+            }
+        }
+
+        window.addEventListener('beforeunload', finalizeIfAbandoned)
+        return () => {
+            window.removeEventListener('beforeunload', finalizeIfAbandoned)
+            finalizeIfAbandoned() // component unmount = in-app navigation away
+        }
+    }, [])
 
     useEffect(() => {
         const SpeechRecognitionClass = getSpeechRecognitionClass()

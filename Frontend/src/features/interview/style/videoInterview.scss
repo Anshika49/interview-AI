@@ -8,6 +8,7 @@ $accent: #ff2d78;
 $font-stack: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 $severity-high: #ff4d4d;
 $severity-low: #3fb950;
+$severity-medium: #f5a623;
 
 *::-webkit-scrollbar {
     display: none;
@@ -55,7 +56,7 @@ $severity-low: #3fb950;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1rem 1.5rem;
 
     &__title {
         display: flex;
@@ -117,6 +118,51 @@ $severity-low: #3fb950;
     padding: 0.65rem 1rem;
     border-radius: 0.6rem;
     font-size: 0.8rem;
+}
+
+.vi-end-btn {
+    flex-shrink: 0;
+    font-family: $font-stack;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background-color: transparent;
+    color: $severity-high;
+    border: 1px solid rgba($severity-high, 0.35);
+
+    &:hover {
+        background-color: rgba($severity-high, 0.1);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.vi-end-confirm {
+    &__icon {
+        color: $severity-high;
+        background-color: rgba($severity-high, 0.12);
+        border-color: rgba($severity-high, 0.25);
+    }
+
+    &__confirm-btn {
+        font-family: $font-stack;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background-color: $severity-high;
+        color: white;
+        border: none;
+        padding-inline: 1.5rem;
+        padding-block: 0.75rem;
+        border-radius: 1rem;
+        cursor: pointer;
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
 }
 
 // ── Stage (webcam + AI avatar) ─────────────────────────────────────────────
@@ -330,6 +376,10 @@ $severity-low: #3fb950;
     &__icon {
         color: $severity-low;
         margin-bottom: 0.5rem;
+    }
+
+    &--incomplete &__icon {
+        color: $severity-medium;
     }
 
     h1 {

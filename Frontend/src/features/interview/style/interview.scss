@@ -365,6 +365,24 @@ $severity-low: #3fb950;
     color: lighten($text-muted, 15%);
 }
 
+.incomplete-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $severity-medium;
+    background-color: rgba($severity-medium, 0.1);
+    border: 1px solid rgba($severity-medium, 0.25);
+    padding: 0.2rem 0.55rem;
+    border-radius: 2rem;
+    margin-left: 0.6rem;
+
+    &--inline {
+        margin-left: 0.5rem;
+        vertical-align: middle;
+    }
+}
+
 // ── Road Map ──────────────────────────────────────────────────────────────────
 .roadmap-list {
     display: flex;

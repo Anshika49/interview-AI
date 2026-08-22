@@ -1,7 +1,7 @@
 const userModel = require("../models/user.model")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
-const tokenBlacklistModel = require("../models/blacklist.model")
+const redisClient = require("../config/redis")
 
 async function registerUserController(req,res){
     const{username,email,password} =req.body
@@ -66,7 +66,6 @@ const token = jwt.sign(
     process.env.JWT_SECRET,
     {expiresIn:"1d"}
    )
-//    res.cookie("token",token)
 res.cookie("token", token, {
     httpOnly: true,
     secure: true,
@@ -86,7 +85,15 @@ res.cookie("token", token, {
 async function logoutUserController(req,res){
     const token = req.cookies.token
     if(token){
-        await tokenBlacklistModel.create({token})
+        try{
+            const decoded = jwt.decode(token)
+            const secondsRemaining = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 0
+            if(secondsRemaining > 0){
+                await redisClient.set(`blacklist:${token}`, "1", "EX", secondsRemaining)
+            }
+        }catch(err){
+            console.error("failed to blacklist token in redis:", err.message)
+        }
     }
     res.clearCookie("token")
     res.status(200).json({

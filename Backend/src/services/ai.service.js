@@ -2,14 +2,52 @@ const {GoogleGenAI} = require("@google/genai")
 const {z} = require("zod")
 const {zodToJsonSchema} = require("zod-to-json-schema")
 const puppeteer = require("puppeteer")
+const redisClient = require("../config/redis")
 
-console.log("GEMINI KEY PRESENT:", !!process.env.GOOGLE_GENAI_API_KEY, "| length:", process.env.GOOGLE_GENAI_API_KEY?.length)
-console.log("VERTEX AI FLAG:", process.env.GOOGLE_GENAI_USE_VERTEXAI)
-console.log("ADC CREDENTIALS PATH:", process.env.GOOGLE_APPLICATION_CREDENTIALS)
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
+
+// ── Gemini rate limiting ─────────────────────────────────────────────────────
+// Fixed-window limiter shared across every Gemini call in this file, backed by
+// Redis so it holds across multiple server instances/restarts. Configurable via
+// env vars so it can be tuned to whatever quota the API key actually has.
+const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "10", 10)
+const GEMINI_RATE_LIMIT_WINDOW_SECONDS = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SECONDS || "60", 10)
+const GEMINI_RATE_LIMIT_KEY = "ratelimit:gemini"
+
+async function assertGeminiRateLimit() {
+    let count
+    try {
+        count = await redisClient.incr(GEMINI_RATE_LIMIT_KEY)
+        if (count === 1) {
+            await redisClient.expire(GEMINI_RATE_LIMIT_KEY, GEMINI_RATE_LIMIT_WINDOW_SECONDS)
+        }
+    } catch (err) {
+        // Redis being unreachable shouldn't block every AI feature in the
+        // app — fail open on rate limiting specifically and just log it.
+        console.error("redis rate limit check failed, failing open:", err.message)
+        return
+    }
+
+    if (count > GEMINI_RATE_LIMIT_MAX) {
+        const rateLimitError = new Error(
+            `Too many AI requests right now. Please wait a moment and try again (limit: ${GEMINI_RATE_LIMIT_MAX} requests per ${GEMINI_RATE_LIMIT_WINDOW_SECONDS}s).`
+        )
+        rateLimitError.status = 429
+        rateLimitError.isOperational = true
+        throw rateLimitError
+    }
+}
+
+// Every Gemini call in this file should go through this wrapper instead of
+// calling ai.models.generateContent directly, so the rate limit above is
+// always enforced consistently.
+async function generateContentRateLimited(params) {
+    await assertGeminiRateLimit()
+    return ai.models.generateContent(params)
+}
 
 const interviewReportSchema = z.object({
     matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate's profile matches the job description"),
@@ -45,7 +83,7 @@ async function generateInterViewReport({resume,selfDescription,jobDescription}){
                         Self Description: ${selfDescription}
                         Job Description: ${jobDescription}`
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentRateLimited({
     model:"gemini-2.5-flash",
     contents: prompt,
     config:{
@@ -95,7 +133,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                         The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
                     `
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentRateLimited({
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
@@ -112,6 +150,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     return pdfBuffer
 
 }
+// ── AI Video Interview ─────────────────────────────────────────────────────
 
 const DIFFICULTY_STAGE_MAP = {
     1: { difficulty: "basic", focus: "a basic self introduction question, asking the candidate to introduce themselves and their background" },
@@ -145,7 +184,7 @@ async function generateVideoInterviewQuestion({ jobDescription, resume, question
 
                         Generate only the next single interview question. Do not ask more than one question. If relevant, the question can build on the candidate's previous answer, otherwise ask a fresh question matching the required difficulty.`
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentRateLimited({
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
@@ -182,7 +221,7 @@ async function evaluateVideoInterviewAnswer({ question, transcript, jobDescripti
                         Evaluate the answer on: accuracy, communication, technical knowledge, confidence (based only on linguistic cues present in the transcript, such as hedging, filler words, and clarity - never infer confidence from appearance or tone of voice you cannot observe), and completeness.
                         Provide an overall score out of 10, constructive feedback, the correct/model answer, and specific improvement suggestions.`
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentRateLimited({
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
@@ -217,7 +256,7 @@ async function generateVideoInterviewSummary({ jobDescription, questions }) {
 
                         Return a structured overall score out of 10, an overall rating label, a list of strengths, a list of weaknesses, and a hiring recommendation.`
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentRateLimited({
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
